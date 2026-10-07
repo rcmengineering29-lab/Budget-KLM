@@ -5,10 +5,6 @@ import type { BudgetRow } from "@/types/budget";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const key = process.env.UPLOAD_PASSCODE;
-  if (key && req.headers.get("x-upload-key") !== key) {
-    return NextResponse.json({ error: "Kode upload salah." }, { status: 401 });
-  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !service) return NextResponse.json({ error: "Supabase belum dikonfigurasi di server." }, { status: 500 });
@@ -18,7 +14,11 @@ export async function POST(req: Request) {
 
   const db = createClient(url, service, { auth: { persistSession: false } });
 
-  const { data: up, error: e1 } = await db.from("budget_uploads").insert({ file_name: fileName, row_count: rows.length }).select("id").single();
+  const token = req.headers.get("authorization")?.replace(/^Bearer /i, "");
+  const { data: auth } = token ? await db.auth.getUser(token) : { data: { user: null } };
+  if (!auth.user) return NextResponse.json({ error: "Sesi login tidak valid. Silakan login ulang." }, { status: 401 });
+
+  const { data: up, error: e1 } = await db.from("budget_uploads").insert({ file_name: fileName, row_count: rows.length, uploaded_by: auth.user.id }).select("id").single();
   if (e1 || !up) return NextResponse.json({ error: e1?.message ?? "Gagal membuat catatan upload." }, { status: 500 });
 
   // Upload ulang untuk tanggal yang sama menggantikan data lama.

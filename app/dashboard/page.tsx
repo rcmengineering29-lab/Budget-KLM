@@ -5,21 +5,24 @@ import FilterBar, { type Filters } from "@/components/filters/filter-bar";
 import BudgetCard from "@/components/cards/budget-card";
 import { JenisChart, KodeChart } from "@/components/charts/budget-charts";
 import { groupBy, summarize, useBudgetRows, useLatestDate } from "@/hooks/use-budget";
-import { dateLabel, pct, rupiah } from "@/lib/utils/format";
+import { dateLabel, pct } from "@/lib/utils/format";
+import { useCurrency } from "@/components/currency-provider";
 
 const EMPTY: Filters = { date: "", jenis: "", kode: "" };
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="rounded-xl border border-line bg-panel p-4">
       <p className="text-sm text-mute">{label}</p>
       <p className="mt-1 break-words text-xl font-bold tabular-nums sm:text-2xl">{value}</p>
+      {note && <p className="mt-1 text-xs text-mute">{note}</p>}
     </div>
   );
 }
 
 export default function DashboardPage() {
   const latest = useLatestDate();
+  const { fmt, currency } = useCurrency();
   const [draft, setDraft] = useState<Filters>(EMPTY);
   const [applied, setApplied] = useState<Filters>(EMPTY);
 
@@ -55,7 +58,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard Budget</h1>
-        {applied.date && <p className="text-sm text-mute">Data per {dateLabel(applied.date)}</p>}
+        {applied.date && <p className="text-sm text-mute">Data per {dateLabel(applied.date)} · ditampilkan dalam {currency}</p>}
       </div>
 
       <FilterBar draft={draft} setDraft={setDraft} jenisOptions={jenisOptions} kodeOptions={kodeOptions} onApply={() => setApplied(draft)} onReset={reset} />
@@ -72,9 +75,9 @@ export default function DashboardPage() {
       {rows.length > 0 && (
         <>
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi label="Total Consumable Budget" value={rupiah(kpi.consumable)} />
-            <Kpi label="Total Available Amount" value={rupiah(kpi.available)} />
-            <Kpi label="Total Consumed Budget" value={rupiah(kpi.consumed)} />
+            <Kpi label="Total Consumable Budget" value={fmt(kpi.consumable)} />
+            <Kpi label="Total Available Amount" value={fmt(kpi.available)} />
+            <Kpi label="Total Consumed Budget" value={fmt(kpi.consumed)} note={`${pct(kpi.usage)} dari consumable`} />
             <Kpi label="Persentase Pemakaian" value={pct(kpi.usage)} />
           </section>
 

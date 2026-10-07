@@ -31,6 +31,6 @@ create index if not exists idx_upload_id on public.budget_data (upload_id);
 alter table public.budget_uploads enable row level security;
 alter table public.budget_data enable row level security;
 
--- Baca: dashboard memakai anon key. Tulis: hanya lewat service role (API route), yang melewati RLS.
-create policy "read uploads" on public.budget_uploads for select using (true);
-create policy "read data" on public.budget_data for select using (true);
+-- Baca: hanya user yang sudah login. Tulis: hanya lewat service role (API route), yang melewati RLS.
+create policy "auth read uploads" on public.budget_uploads for select to authenticated using (true);
+create policy "auth read data" on public.budget_data for select to authenticated using (true);

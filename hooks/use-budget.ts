@@ -42,11 +42,12 @@ export function summarize(rows: BudgetRow[]) {
 }
 
 export function groupBy(rows: BudgetRow[], keyFn: (r: BudgetRow) => string) {
-  const map = new Map<string, { name: string; consumable: number; available: number }>();
+  const map = new Map<string, { name: string; consumable: number; consumed: number; available: number }>();
   for (const r of rows) {
     const k = keyFn(r);
-    const g = map.get(k) ?? { name: k, consumable: 0, available: 0 };
+    const g = map.get(k) ?? { name: k, consumable: 0, consumed: 0, available: 0 };
     g.consumable += Number(r.consumable_budget || 0);
+    g.consumed += Number(r.consumed_budget || 0);
     g.available += Number(r.available_amount || 0);
     map.set(k, g);
   }
