@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 // Data di database selalu USD. Konversi hanya untuk tampilan.
 export const SUGGESTED = ["USD", "IDR", "EUR", "SGD", "JPY", "AUD", "GBP", "CNY", "MYR"];
+export const CURRENCIES = SUGGESTED; // alias kompatibilitas
 // Kurs cadangan (perkiraan) jika kurs live gagal dimuat.
 const FALLBACK: Record<string, number> = { USD: 1, IDR: 16000, EUR: 0.92, SGD: 1.3, JPY: 150, AUD: 1.5, GBP: 0.78, CNY: 7.2, MYR: 4.4 };
 const TTL = 12 * 3600 * 1000;
