@@ -28,10 +28,14 @@ Kolom persis: `Tanggal, Jenis Budget, Kode, Uraian, Consumable Budget, Consumed 
 - Tanggal boleh `03 OKTOBER 2026` atau sel tanggal Excel.
 - Upload ulang untuk tanggal yang sama **menggantikan** data tanggal itu.
 
-## 5. Mata uang
-Data disimpan dalam USD. Tampilan default USD; ganti lewat dropdown di header atau halaman Pengaturan (pilihan diingat per perangkat). Kurs diambil dari open.er-api.com dan di-cache 12 jam di browser. Jika gagal dimuat, dipakai kurs perkiraan (ditandai di Pengaturan). Untuk laporan resmi, gunakan kurs yang disepakati perusahaan. Daftar mata uang ada di `components/currency-provider.tsx`.
+## 5. Aturan perhitungan
+- **DEPR:** baris yang Uraian-nya mengandung `DEPR` tetap tampil sebagai kartu (diberi penanda), tetapi **tidak dihitung** di KPI, ringkasan Capex/Opex, dan grafik.
+- **Capex / Opex:** ditentukan dari awalan Jenis Budget. `20D…` = Capex, `I20…` = Opex, lainnya = "Lainnya". Ubah aturan di `lib/utils/classify.ts`.
 
-## 6. Deploy Netlify
+## 6. Mata uang
+Data disimpan dalam USD. Tampilan default USD. Ketik kode mata uang apa pun (mis. `IDR`) di kolom header atau di halaman Pengaturan. Kurs diambil dari open.er-api.com dan di-cache 12 jam di browser. Untuk kode yang tidak ada di sumber kurs, atau jika ingin memakai kurs perusahaan, isi **kurs manual** di Pengaturan. Pilihan disimpan per perangkat.
+
+## 7. Deploy Netlify
 1. Push ke GitHub, lalu Netlify → **Import from Git**. Build sudah diatur di `netlify.toml`.
 2. Isi environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 3. Deploy ulang setiap kali mengubah variabel `NEXT_PUBLIC_*`.

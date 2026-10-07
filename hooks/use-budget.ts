@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase/client";
 import type { BudgetRow, BudgetUpload } from "@/types/budget";
+import { isDepr } from "@/lib/utils/classify";
 
 export const useLatestDate = () =>
   useQuery({
@@ -34,14 +35,16 @@ export const useUploads = () =>
     },
   });
 
-export function summarize(rows: BudgetRow[]) {
+export function summarize(all: BudgetRow[]) {
+  const rows = all.filter((r) => !isDepr(r.uraian)); // DEPR tidak dihitung
   const sum = (k: keyof BudgetRow) => rows.reduce((a, r) => a + Number(r[k] || 0), 0);
   const consumable = sum("consumable_budget");
   const consumed = sum("consumed_budget");
   return { consumable, available: sum("available_amount"), consumed, usage: consumable ? consumed / consumable : 0 };
 }
 
-export function groupBy(rows: BudgetRow[], keyFn: (r: BudgetRow) => string) {
+export function groupBy(all: BudgetRow[], keyFn: (r: BudgetRow) => string) {
+  const rows = all.filter((r) => !isDepr(r.uraian)); // DEPR tidak dihitung
   const map = new Map<string, { name: string; consumable: number; consumed: number; available: number }>();
   for (const r of rows) {
     const k = keyFn(r);

@@ -1,5 +1,5 @@
 "use client";
-export type Filters = { date: string; jenis: string; kode: string };
+export type Filters = { date: string; tipe: string; jenis: string; kode: string };
 
 const field = "min-h-[44px] w-full rounded-lg border border-line bg-panel px-3 text-sm text-ink";
 
@@ -13,9 +13,16 @@ export default function FilterBar(props: {
 }) {
   const { draft, setDraft, jenisOptions, kodeOptions, onApply, onReset } = props;
   return (
-    <div className="grid gap-3 rounded-xl border border-line bg-panel p-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1.4fr_auto]">
+    <div className="grid gap-3 rounded-xl border border-line bg-panel p-4 sm:grid-cols-2 xl:grid-cols-[1fr_0.8fr_1fr_1.4fr_auto]">
       <label className="text-xs text-mute">Tanggal
         <input type="date" className={field + " mt-1"} value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
+      </label>
+      <label className="text-xs text-mute">Tipe
+        <select className={field + " mt-1"} value={draft.tipe} onChange={(e) => setDraft({ ...draft, tipe: e.target.value, jenis: "" })}>
+          <option value="">Semua</option>
+          <option value="CAPEX">Capex</option>
+          <option value="OPEX">Opex</option>
+        </select>
       </label>
       <label className="text-xs text-mute">Jenis Budget
         <select className={field + " mt-1"} value={draft.jenis} onChange={(e) => setDraft({ ...draft, jenis: e.target.value })}>

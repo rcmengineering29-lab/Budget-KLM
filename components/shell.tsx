@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Database, History, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth-provider";
-import { CURRENCIES, useCurrency } from "@/components/currency-provider";
+import { useCurrency } from "@/components/currency-provider";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -33,16 +33,27 @@ export function ThemeToggle() {
 }
 
 export function CurrencySelect() {
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, codes } = useCurrency();
+  const [text, setText] = useState(currency);
+  useEffect(() => setText(currency), [currency]);
   return (
-    <select
-      aria-label="Mata uang"
-      value={currency}
-      onChange={(e) => setCurrency(e.target.value)}
-      className="h-11 rounded-lg border border-line bg-panel px-3 text-sm font-medium text-ink"
-    >
-      {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
-    </select>
+    <>
+      <input
+        list="currency-codes"
+        aria-label="Kode mata uang"
+        title="Ketik kode mata uang, mis. IDR. Untuk kode yang belum dikenal, isi kurs manual di Pengaturan."
+        maxLength={3}
+        value={text}
+        onChange={(e) => {
+          const v = e.target.value.toUpperCase();
+          setText(v);
+          if (v.length === 3 && v !== currency && !setCurrency(v)) setText(currency);
+        }}
+        onBlur={() => setText(currency)}
+        className="h-11 w-20 rounded-lg border border-line bg-panel px-2 text-center text-sm font-medium uppercase text-ink"
+      />
+      <datalist id="currency-codes">{codes.map((c) => <option key={c} value={c} />)}</datalist>
+    </>
   );
 }
 
