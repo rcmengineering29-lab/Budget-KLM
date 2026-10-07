@@ -1,0 +1,47 @@
+"use client";
+import type { BudgetRow } from "@/types/budget";
+import { pct } from "@/lib/utils/format";
+import { useCurrency } from "@/components/currency-provider";
+import { isDepr, tipeOf, TIPE_LABEL } from "@/lib/utils/classify";
+
+// Kelas ditulis lengkap agar terdeteksi Tailwind.
+function tone(ratio: number) {
+  if (ratio >= 0.6) return { bar: "bg-emerald-500", edge: "border-t-emerald-500", chip: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300", label: "Aman" };
+  if (ratio >= 0.3) return { bar: "bg-amber-400", edge: "border-t-amber-400", chip: "bg-amber-400/20 text-amber-700 dark:text-amber-300", label: "Waspada" };
+  if (ratio >= 0.1) return { bar: "bg-orange-600", edge: "border-t-orange-600", chip: "bg-orange-600/15 text-orange-700 dark:text-orange-300", label: "Menipis" };
+  return { bar: "bg-red-600", edge: "border-t-red-600", chip: "bg-red-600/15 text-red-700 dark:text-red-300", label: "Kritis" };
+}
+
+export default function BudgetCard({ row }: { row: BudgetRow }) {
+  const { fmt } = useCurrency();
+  const ratio = row.consumable_budget ? row.available_amount / row.consumable_budget : 0;
+  const used = row.consumable_budget ? row.consumed_budget / row.consumable_budget : 0;
+  const t = tone(ratio);
+  const tipe = tipeOf(row.jenis_budget);
+  const tipeCls = tipe === "CAPEX" ? "bg-sky-500/15 text-sky-700 dark:text-sky-300" : tipe === "OPEX" ? "bg-violet-500/15 text-violet-700 dark:text-violet-300" : "bg-line text-mute";
+  const width = Math.max(0, Math.min(100, ratio * 100));
+  return (
+    <article className={`flex h-full min-h-[280px] flex-col rounded-xl border border-t-4 border-line bg-panel p-4 ${t.edge}`}>
+      <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+        <span className={`rounded px-1.5 py-0.5 ${tipeCls}`}>{TIPE_LABEL[tipe]}</span>
+        {isDepr(row.uraian) && <span className="rounded bg-line px-1.5 py-0.5 text-mute">Tidak masuk total</span>}
+      </div>
+      <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug">{row.uraian}</h3>
+      <p className="mt-1 truncate text-xs text-mute">{row.kode} · {row.jenis_budget}</p>
+
+      <dl className="mt-4 space-y-2 text-sm">
+        <div className="flex justify-between gap-2"><dt className="text-mute">Consumable</dt><dd className="font-medium tabular-nums">{fmt(row.consumable_budget)}</dd></div>
+        <div className="flex justify-between gap-2"><dt className="text-mute">Consumed</dt><dd className="font-medium tabular-nums">{fmt(row.consumed_budget)}</dd></div>
+        <div className="flex justify-between gap-2"><dt className="text-mute">Available</dt><dd className="font-medium tabular-nums">{fmt(row.available_amount)}</dd></div>
+      </dl>
+
+      <div className="mt-auto pt-4">
+        <div className="mb-1 flex items-center justify-between text-xs">
+          <span className={`rounded-full px-2 py-0.5 font-medium ${t.chip}`}>{t.label}</span>
+          <span className="tabular-nums text-mute">Sisa {pct(ratio)} · Terpakai {pct(used)}</span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-line"><div className={`h-full ${t.bar}`} style={{ width: `${width}%` }} /></div>
+      </div>
+    </article>
+  );
+}
