@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 243 245 246;
+  --panel: 255 255 255;
+  --ink: 20 33 41;
+  --mute: 98 114 122;
+  --line: 218 225 228;
+  --brand: 15 98 110;
+}
+.dark {
+  --bg: 12 18 22;
+  --panel: 20 29 35;
+  --ink: 232 238 240;
+  --mute: 144 160 168;
+  --line: 40 54 62;
+  --brand: 74 190 202;
+}
+body { @apply bg-bg text-ink font-sans antialiased; }
+button, a, input, select { @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
