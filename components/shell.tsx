@@ -1,13 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Database, History, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, Upload, X } from "lucide-react";
+import { BarChart3, ChevronDown, Database, History, LayoutDashboard, LogOut, Menu, Moon, Settings, Sun, Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/auth-provider";
 import { useCurrency } from "@/components/currency-provider";
+import CurrencyPanel from "@/components/currency-panel";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -32,28 +33,34 @@ export function ThemeToggle() {
   );
 }
 
-export function CurrencySelect() {
-  const { currency, setCurrency, codes } = useCurrency();
-  const [text, setText] = useState(currency);
-  useEffect(() => setText(currency), [currency]);
+export function CurrencyMenu() {
+  const { currency, mode } = useCurrency();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
   return (
-    <>
-      <input
-        list="currency-codes"
-        aria-label="Kode mata uang"
-        title="Ketik kode mata uang, mis. IDR. Untuk kode yang belum dikenal, isi kurs manual di Pengaturan."
-        maxLength={3}
-        value={text}
-        onChange={(e) => {
-          const v = e.target.value.toUpperCase();
-          setText(v);
-          if (v.length === 3 && v !== currency && !setCurrency(v)) setText(currency);
-        }}
-        onBlur={() => setText(currency)}
-        className="h-11 w-20 rounded-lg border border-line bg-panel px-2 text-center text-sm font-medium uppercase text-ink"
-      />
-      <datalist id="currency-codes">{codes.map((c) => <option key={c} value={c} />)}</datalist>
-    </>
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Pengaturan mata uang"
+        className="flex h-11 items-center gap-1.5 rounded-lg border border-line bg-panel px-3 text-sm font-medium"
+      >
+        {currency}
+        {mode === "manual" && currency !== "USD" && <span className="text-xs text-mute">manual</span>}
+        <ChevronDown size={14} />
+      </button>
+      {open && (
+        <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-line bg-panel p-4 shadow-xl">
+          <CurrencyPanel onDone={() => setOpen(false)} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -121,7 +128,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <Menu size={20} />
           </button>
           <span className="font-bold lg:hidden">Budget KLM</span>
-          <div className="ml-auto flex items-center gap-2"><CurrencySelect /><ThemeToggle /></div>
+          <div className="ml-auto flex items-center gap-2"><CurrencyMenu /><ThemeToggle /></div>
         </header>
         <main className="p-4 lg:p-8">{children}</main>
       </div>

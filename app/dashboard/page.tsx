@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import FilterBar, { type Filters } from "@/components/filters/filter-bar";
 import BudgetCard from "@/components/cards/budget-card";
+import WaShare from "@/components/share/wa-share";
 import { JenisChart, KodeChart } from "@/components/charts/budget-charts";
 import { groupBy, summarize, useBudgetRows, useLatestDate } from "@/hooks/use-budget";
 import { useCurrency } from "@/components/currency-provider";
@@ -89,9 +90,12 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Budget</h1>
-        {applied.date && <p className="text-sm text-mute">Data per {dateLabel(applied.date)} · ditampilkan dalam {currency}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard Budget</h1>
+          {applied.date && <p className="text-sm text-mute">Data per {dateLabel(applied.date)} · ditampilkan dalam {currency}</p>}
+        </div>
+        {rows.length > 0 && <WaShare rows={rows} date={applied.date} />}
       </div>
 
       <FilterBar draft={draft} setDraft={setDraft} jenisOptions={jenisOptions} kodeOptions={kodeOptions} onApply={() => setApplied(draft)} onReset={reset} />

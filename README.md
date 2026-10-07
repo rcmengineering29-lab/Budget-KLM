@@ -30,12 +30,18 @@ Kolom persis: `Tanggal, Jenis Budget, Kode, Uraian, Consumable Budget, Consumed 
 
 ## 5. Aturan perhitungan
 - **DEPR:** baris yang Uraian-nya mengandung `DEPR` tetap tampil sebagai kartu (diberi penanda), tetapi **tidak dihitung** di KPI, ringkasan Capex/Opex, dan grafik.
-- **Capex / Opex:** ditentukan dari awalan Jenis Budget. `20D…` = Capex, `I20…` = Opex, lainnya = "Lainnya". Ubah aturan di `lib/utils/classify.ts`.
+- **Capex / Opex:** ditentukan dari awalan Jenis Budget. `I20…` = Capex, `20D…` = Opex, lainnya = "Lainnya". Ubah aturan di `lib/utils/classify.ts`.
 
 ## 6. Mata uang
-Data disimpan dalam USD. Tampilan default USD. Ketik kode mata uang apa pun (mis. `IDR`) di kolom header atau di halaman Pengaturan. Kurs diambil dari open.er-api.com dan di-cache 12 jam di browser. Untuk kode yang tidak ada di sumber kurs, atau jika ingin memakai kurs perusahaan, isi **kurs manual** di Pengaturan. Pilihan disimpan per perangkat.
+Data disimpan dalam USD. Tampilan default USD. Klik tombol mata uang di header (atau halaman Pengaturan), ketik/pilih kode (mis. `IDR`), lalu pilih:
+- **Otomatis:** kurs dari open.er-api.com, di-cache 12 jam di browser.
+- **Manual:** isi sendiri `1 USD = …` (mis. `18500`, `18.500`, atau `18,500`). Cocok untuk kurs budget perusahaan atau kode yang tidak ada di sumber kurs.
+Pilihan disimpan per perangkat.
 
-## 7. Deploy Netlify
+## 7. Bagikan ke WhatsApp
+Di dashboard klik **Bagikan ke WhatsApp**, centang item yang ingin dikirim (atau pakai Pilih semua / Tanpa DEPR), lalu **Salin teks** atau **Kirim ke WhatsApp**. Pesan tersusun per Capex/Opex dengan ringkasan total, memakai mata uang yang sedang aktif. Format pesan ada di `lib/utils/wa.ts`.
+
+## 8. Deploy Netlify
 1. Push ke GitHub, lalu Netlify → **Import from Git**. Build sudah diatur di `netlify.toml`.
 2. Isi environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 3. Deploy ulang setiap kali mengubah variabel `NEXT_PUBLIC_*`.

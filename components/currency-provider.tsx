@@ -9,12 +9,16 @@ const FALLBACK: Record<string, number> = { USD: 1, IDR: 16000, EUR: 0.92, SGD: 1
 const TTL = 12 * 3600 * 1000;
 const CODE = /^[A-Z]{3}$/;
 
+export type Mode = "auto" | "manual";
 type Ctx = {
-  currency: string; rate: number; live: boolean; updated: string | null;
-  manual: number | null; codes: string[];
-  /** Ubah mata uang tampilan. Return false jika kurs tidak diketahui dan tidak ada kurs manual. */
-  setCurrency: (code: string, manualRate?: number) => boolean;
-  clearManual: () => void;
+  currency: string;
+  mode: Mode;                 // mode yang sedang dipakai
+  rate: number;               // 1 USD = rate {currency}
+  autoRate: number | null;    // kurs otomatis untuk mata uang aktif
+  manualRate: number | null;  // kurs manual tersimpan untuk mata uang aktif
+  live: boolean; updated: string | null; codes: string[];
+  /** Terapkan mata uang + mode. Return pesan error, atau null jika berhasil. */
+  apply: (code: string, mode: Mode, manualRate?: number) => string | null;
   fmt: (usd: number) => string; axis: (usd: number) => string;
 };
 const C = createContext<Ctx>(null as unknown as Ctx);
@@ -27,13 +31,15 @@ export default function CurrencyProvider({ children }: { children: React.ReactNo
   const [currency, setCur] = useState("USD");
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK);
   const [manualMap, setManualMap] = useState<Record<string, number>>({});
+  const [modes, setModes] = useState<Record<string, Mode>>({});
   const [live, setLive] = useState(false);
   const [updated, setUpdated] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = read<string>("klm-currency", "USD");
     if (CODE.test(saved)) setCur(saved);
-    setManualMap(read<Record<string, number>>("klm-manual-rates", {}));
+    setManualMap(read("klm-manual-rates", {}));
+    setModes(read("klm-modes", {}));
 
     const cache = read<{ ts: number; rates: Record<string, number> } | null>("klm-rates", null);
     if (cache && Date.now() - cache.ts < TTL) {
@@ -52,9 +58,17 @@ export default function CurrencyProvider({ children }: { children: React.ReactNo
   }, []);
 
   const value = useMemo<Ctx>(() => {
-    const known = manualMap[currency] ?? rates[currency];
-    const code = known ? currency : "USD"; // kode tanpa kurs → kembali ke USD
-    const rate = known ?? 1;
+    const manual = manualMap[currency] ?? null;
+    const auto = rates[currency] ?? null;
+    let code = currency;
+    let mode: Mode = "auto";
+    let rate = 1;
+    if (currency === "USD") rate = 1;
+    else if (modes[currency] === "manual" && manual) { mode = "manual"; rate = manual; }
+    else if (auto) rate = auto;
+    else if (manual) { mode = "manual"; rate = manual; }
+    else code = "USD"; // kode tanpa kurs → kembali ke USD
+
     let money: (n: number) => string;
     try {
       const f = new Intl.NumberFormat(code === "IDR" ? "id-ID" : "en-US", { style: "currency", currency: code });
@@ -63,27 +77,35 @@ export default function CurrencyProvider({ children }: { children: React.ReactNo
       money = (n) => `${code} ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
     }
     const short = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
     return {
-      currency: code, rate, live, updated,
-      manual: manualMap[code] ?? null,
+      currency: code, mode, rate, live, updated,
+      autoRate: rates[code] ?? null,
+      manualRate: manualMap[code] ?? null,
       codes: [...new Set([...SUGGESTED, ...Object.keys(rates)])].sort(),
-      setCurrency: (raw, manualRate) => {
+      apply: (raw, wantMode, manualRate) => {
         const c = raw.trim().toUpperCase();
-        if (!CODE.test(c)) return false;
+        if (!CODE.test(c)) return "Kode harus 3 huruf, misalnya IDR.";
         let map = manualMap;
-        if (manualRate && manualRate > 0) { map = { ...manualMap, [c]: manualRate }; setManualMap(map); write("klm-manual-rates", map); }
-        if (!map[c] && !rates[c]) return false;
+        if (c !== "USD") {
+          if (wantMode === "manual") {
+            const r = manualRate ?? manualMap[c];
+            if (!r || !(r > 0)) return "Isi kurs manual lebih dari 0, misalnya 18500.";
+            map = { ...manualMap, [c]: r };
+            setManualMap(map); write("klm-manual-rates", map);
+          } else if (!rates[c]) {
+            return `Kurs otomatis ${c} tidak tersedia. Pilih Manual dan isi kurs.`;
+          }
+        }
+        const nm = { ...modes, [c]: wantMode };
+        setModes(nm); write("klm-modes", nm);
         setCur(c); write("klm-currency", c);
-        return true;
-      },
-      clearManual: () => {
-        const map = { ...manualMap }; delete map[code];
-        setManualMap(map); write("klm-manual-rates", map);
+        return null;
       },
       fmt: (usd) => money((usd || 0) * rate),
       axis: (usd) => short.format((usd || 0) * rate),
     };
-  }, [currency, rates, manualMap, live, updated]);
+  }, [currency, rates, manualMap, modes, live, updated]);
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }
